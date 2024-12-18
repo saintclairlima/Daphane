@@ -1,0 +1,6 @@
+**/__pycache__/
+chat-env
+api/.env
+api/testes/resultados/*
+api/conteudo/bancos_vetores/*
+!api/conteudo/bancos_vetores/documentos_mulher
