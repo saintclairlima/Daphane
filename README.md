@@ -1,11 +1,3 @@
-# RAG-ChatMini
-Este repositório é uma versão limpa do estado do repositório https://github.com/saintclair-lima/RAG-Chat.git.
-
-Para um histórico do processo, clone aquele repositório.
-
-## Setup
-Ao clonar este repositório, executar o aquivo `./setup.sh`
-
 ## Ollama: Instalação e Configuração
 ### Instalando o Ollama
 #### Linux
@@ -18,7 +10,7 @@ curl -fsSL https://ollama.com/install.sh | sh
 * Execute o instalador e siga as instruções em tela
 
 ### Adicionando os modelos ao Ollama
-No projeto, utilizamos como modelo principal o `Llama3.2`, mas outros modelos são disponíveis para download (como o `phi3.5`, por exemplo).
+No projeto, utilizamos como modelo principal o `Llama3.1`, mas outros modelos são disponíveis para download (como o `phi3.5`, por exemplo).
 Para inclusão do modelo, tanto no Windos como no Linux, por meio do terminal/prompt/Powershell, executa-se:
 
 ```
@@ -26,7 +18,7 @@ ollama pull <nome do modelo>
 ```
 Em nosso caso:
 ```
-ollama pull llama3.2
+ollama pull llama3.1
 ```
 Após a inclusão do modelo no Ollama, pode-se testar se tudo ocorreu corretamente executando o modelo direto no terminal/promt/Powershell:
 ```
@@ -34,7 +26,7 @@ ollama run <nome do modelo>
 ```
 Em nosso caso:
 ```
-ollama run llama3.2
+ollama run llama3.1
 ```
 
 ### Configurações de Ambiente
@@ -48,7 +40,7 @@ De acordo com a documentação (ver https://github.com/ollama/ollama/blob/main/d
 * `OLLAMA_NUM_PARALLEL` - O número máximo de solicitações paralelas que cada modelo processará ao mesmo tempo. O padrão irá selecionar automaticamente 4 ou 1 dependendo da memória disponível.
 * `OLLAMA_MAX_QUEUE` - O número máximo de solicitações que Ollama irá enfileirar quando estiver ocupado, antes de rejeitar solicitações adicionais. O padrão é 512.
 
-Outras variáveis de interesse podem ser `OLLAMA_DEBUG` (true para ativar debug) e  `AQUELA_OUTRA_QUE_NAO_CONSIGO_LEMBRAR`.
+Outra variável de interesse pode ser `OLLAMA_DEBUG` (`'true'` para ativar debug).
 
 Assim, definimos as variáveis de ambiente semelhante ao que segue.
 
