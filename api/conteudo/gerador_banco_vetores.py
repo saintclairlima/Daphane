@@ -17,11 +17,7 @@ NOME_COLECAO='colecao_teste_default'
 COMPRIMENTO_MAX_FRAGMENTO = 300    
 
 class GeradorBancoVetores:
-    def run(self,
-            nome_banco_vetores=NOME_BANCO_VETORES,
-            nome_colecao=NOME_COLECAO,
-            comprimento_max_fragmento=COMPRIMENTO_MAX_FRAGMENTO,
-            instrucao=None):
+    def obter_documentos_env(self, comprimento_max_fragmento=COMPRIMENTO_MAX_FRAGMENTO):
         documentos = []
         titulos = []
         id=1
@@ -84,15 +80,25 @@ class GeradorBancoVetores:
                 }
                 documentos.append(doc)
                 id += 1
-
+        return documentos
+    
+    def gerar_banco(self,
+            documentos,
+            nome_banco_vetores=NOME_BANCO_VETORES,
+            nome_colecao=NOME_COLECAO,
+            instrucao=None):
+        
         # Utilizando o ChromaDb diretamente
         client = chromadb.PersistentClient(path=nome_banco_vetores)
+        
         funcao_de_embeddings_sentence_tranformer = FuncaoEmbeddings(
             nome_modelo=EMBEDDING_INSTRUCTOR,
             tipo_modelo=SentenceTransformer,
             device=DEVICE,
             instrucao=instrucao)
+        
         collection = client.create_collection(name=nome_colecao, embedding_function=funcao_de_embeddings_sentence_tranformer, metadata={'hnsw:space': 'cosine'})
+        
         print(f'Gerando >>> Banco {nome_banco_vetores} - Coleção {nome_colecao} - Instrução: {instrucao}')
         qtd_docs = len(documentos)
         for idx in range(qtd_docs):
@@ -109,7 +115,24 @@ class GeradorBancoVetores:
         #print(query_result)
 
         # client.get_collection(name='legisberto', embedding_function=funcao_de_embeddings_sentence_tranformer)
-
+    def run(self,
+            nome_banco_vetores=NOME_BANCO_VETORES,
+            nome_colecao=NOME_COLECAO,
+            comprimento_max_fragmento=COMPRIMENTO_MAX_FRAGMENTO,
+            instrucao=None):
+        
+        docs = self.obter_documentos_env(
+            comprimento_max_fragmento=comprimento_max_fragmento
+        )
+        
+        self.gerar_banco(
+            documentos=docs,
+            nome_banco_vetores=nome_banco_vetores,
+            nome_colecao=nome_colecao,
+            instrucao=instrucao
+        )
+        
+        
 if __name__ == "__main__":   
     gerador_banco_vetores = GeradorBancoVetores()
     

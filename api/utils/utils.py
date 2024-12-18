@@ -70,8 +70,7 @@ class InterfaceOllama:
 
         self.cliente_ollama = ClienteOllama(url_llama= url_llama, nome_modelo=nome_modelo, temperature=temperature)
 
-        self.papel_do_LLM = '''ALERN e ALRN significam Assembleia Legislativa do Estado do Rio Grande do Norte.
-Você é um assistente que responde a dúvidas de servidores da ALERN sobre o regimento interno da ALRN, o regime jurídico dos servidores estaduais do RN, bem como resoluções da ALRN.
+        self.papel_do_LLM = '''Você é uma assistente que responde a dúvidas de mulheres sobre a Lei Maria da Penha.
 Assuma um tom formal, porém caloroso, com gentileza nas respostas. Utilize palavras e termos que sejam claros, autoexplicativos e linguagem simples, próximo do que o cidadão comum utiliza.'''
         
         self.diretrizes = '''Use as informações dos DOCUMENTOS fornecidos para gerar uma resposta clara para a PERGUNTA.
