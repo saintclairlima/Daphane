@@ -82,7 +82,7 @@ Se você não souber a resposta, assuma um tom gentil e diga que não tem inform
         return 'DOCUMENTOS:\n{}\nPERGUNTA: {}'.format('\n'.join(documentos), pergunta)
 
     def criar_prompt_llama(self, prompt_usuario: str):
-        definicoes_sistema = f'''{self.papel_do_LLM} DIRETRIZES PARA AS RESPOSTAS: {self.diretrizes}'''
+        definicoes_sistema = f'''PAPEL: {self.papel_do_LLM}. DIRETRIZES PARA AS RESPOSTAS: {self.diretrizes}'''
         return f'<s>[INST]<<SYS>>\n{definicoes_sistema}\n<</SYS>>\n{prompt_usuario}[/INST]'
     
     async def gerar_resposta_llama(self, pergunta: str, documentos: List[str], contexto:List[int]=environment.CONTEXTO_BASE):
