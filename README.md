@@ -131,9 +131,9 @@ deactivate
 Utilize o git para baixar o repositório
 
 ```git
-git clone https://github.com/saintclair-lima/RAG-Chat.git
+git clone https://github.com/saintclairlima/Daphane.git
 
-cd ./RAG-Chat
+cd ./Daphane
 ```
 
 O `.gitignore` do repositório está configurado para ignorar a pasta com os arquivos do ambiente virtual Python, de forma a não incluí-la no controle de versão. O nome de referência da dita pasta está como `chat-env`, sendo o motivo pelo qual sugerimos nomear o ambiente virtual como `chat-env`.
@@ -164,8 +164,16 @@ No caso da versão 12.4 do CUDA, é necessaário alterar para:
 
 ```
 --find-links https://download.pytorch.org/whl/cu124
+torch==2.5.0
+```
+
+Após esses ajustes, basta instalar os requisitos com:
+
+```
 pip install -r requirements.txt
 ```
+
+Obs: Em alguns casos, há problema de conflito entre a versão do `Numpy` nos requisitos (2.x) e a biblioteca `transformers`. Sendo este o caso, basta instalax uma versão 1.x do `Numpy`.
 
 ### Criando e populando as coleções de documentos no ChromaDB
 
