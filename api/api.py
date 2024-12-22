@@ -34,7 +34,9 @@ async def pagina_chat(url_redirec: str = Query(None)):
     with open('web/chat.html', 'r', encoding='utf-8') as arquivo: conteudo_html = arquivo.read()
     
     if url_redirec:
-        environment.TAGS_SUBSTITUICAO_HTML['URL_HOST'] = url_redirec
+        environment.TAGS_SUBSTITUICAO_HTML['TAG_INSERCAO_URL_HOST'] = url_redirec
+    
+    print(environment.TAGS_SUBSTITUICAO_HTML)
         
     # substituindo as tags dentro do HTML, para maior controle
     for tag, valor in environment.TAGS_SUBSTITUICAO_HTML.items():
