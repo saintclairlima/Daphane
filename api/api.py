@@ -35,8 +35,6 @@ async def pagina_chat(url_redirec: str = Query(None)):
     
     if url_redirec:
         environment.TAGS_SUBSTITUICAO_HTML['TAG_INSERCAO_URL_HOST'] = url_redirec
-    
-    print(environment.TAGS_SUBSTITUICAO_HTML)
         
     # substituindo as tags dentro do HTML, para maior controle
     for tag, valor in environment.TAGS_SUBSTITUICAO_HTML.items():
