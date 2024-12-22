@@ -1,5 +1,5 @@
 print('Inicializando a estrutura da API...\nImportando as bibliotecas...')
-from fastapi import FastAPI
+from fastapi import FastAPI, Query
 from fastapi.responses import FileResponse, HTMLResponse, StreamingResponse
 from sentence_transformers import SentenceTransformer
 from starlette.middleware.cors import CORSMiddleware
@@ -30,8 +30,12 @@ async def gerar_resposta(dadosRecebidos: DadosChat):
 
 
 @app.get('/chat/')
-async def pagina_chat():
+async def pagina_chat(url_redirec: str = Query(None)):
     with open('web/chat.html', 'r', encoding='utf-8') as arquivo: conteudo_html = arquivo.read()
+    
+    if url_redirec:
+        environment.TAGS_SUBSTITUICAO_HTML['URL_HOST'] = url_redirec
+        
     # substituindo as tags dentro do HTML, para maior controle
     for tag, valor in environment.TAGS_SUBSTITUICAO_HTML.items():
         conteudo_html = conteudo_html.replace(tag, valor)
