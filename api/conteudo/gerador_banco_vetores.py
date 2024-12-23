@@ -76,6 +76,7 @@ class GeradorBancoVetores:
                     'subtitulo': f'Art. {tit} - {titulos.count(tit)}',
                     'autor': f'{info["autor"]}',
                     'fonte': f'{info["fonte"]}',
+                    'pagina': None
                 },
             }
             fragmentos.append(fragmento)
@@ -98,6 +99,7 @@ class GeradorBancoVetores:
                             else f'Fragmento 1',
                         'autor': f'{info["autor"]}',
                         'fonte': f'{info["fonte"]}',
+                        'pagina': pagina if pagina else None
                     },
                 }]
             
@@ -120,6 +122,7 @@ class GeradorBancoVetores:
                             else f'Fragmento {len(fragmentos)+1}',
                         'autor': f'{info["autor"]}',
                         'fonte': f'{info["fonte"]}',
+                        'pagina': pagina if pagina else None
                     },
                 }
                 fragmentos.append(fragmento)
