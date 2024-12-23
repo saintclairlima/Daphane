@@ -1,0 +1,9 @@
+{
+    "lei_maria_da_penha": {
+        "url": "datasets/lei_maria_da_penha.txt",
+        "titulo": "LEI Nº 11.340, DE 7 DE AGOSTO DE 2006 - Lei Maria da Penha",
+        "autor": "Governo Federal - República Federativa do Brasil",
+        "fonte": "http://www.planalto.gov.br/ccivil_03/_ato2004-2006/2006/lei/l11340.htm",
+        "texto_articulado": true
+    }
+}

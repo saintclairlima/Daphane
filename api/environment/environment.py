@@ -1,3 +1,4 @@
+import json
 import os
 from dotenv import load_dotenv
 
@@ -27,13 +28,7 @@ class Environment:
 
         self.CONTEXTO_BASE = []
 
-        self.DOCUMENTOS =  {
-            'lei_maria_da_penha': {
-                'url': 'datasets/lei_maria_da_penha.txt',
-                'titulo': 'LEI Nº 11.340, DE 7 DE AGOSTO DE 2006 - Lei Maria da Penha',
-                'autor': 'Governo Federal - República Federativa do Brasil',
-                'fonte': 'http://www.planalto.gov.br/ccivil_03/_ato2004-2006/2006/lei/l11340.htm'
-            }
-        }
+        with open(os.getenv('URL_INDICE_DOCUMENTOS'), 'r') as arq:
+            self.DOCUMENTOS = json.load(arq)
 
 environment = Environment()
