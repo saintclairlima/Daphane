@@ -1,14 +1,13 @@
-import asyncio
 import torch
 
 from concurrent.futures import ThreadPoolExecutor
 from time import time
 from transformers import BertTokenizer, BertForQuestionAnswering, pipeline
-from typing import Callable, Generator
+from typing import Callable
 
 from api.environment.environment import environment
 from api.utils.utils import InterfaceChroma, InterfaceOllama, DadosChat
-from api.utils.mensagem import MensagemControle, MensagemDados, MensagemErro
+from api.utils.mensagem import MensagemControle, MensagemDados, MensagemErro, MensagemInfo
     
 
 class GeradorDeRespostas:
@@ -53,13 +52,6 @@ class GeradorDeRespostas:
                  'conteudo': f"{documentos['documents'][0][idx]}"
             }
             for idx in range(len(documentos['ids'][0]))]
-
-    # AFAZER: Considerar remover essa função.
-    # Era utilizada com gerar_resposta_llama, mas ficou obsoleta usando o for assíncrono
-    async def async_stream_wrapper(self, sync_generator: Generator):
-        loop = asyncio.get_running_loop()
-        for item in sync_generator:
-            yield await loop.run_in_executor(self.executor, lambda x=item: x)
 
     async def estimar_resposta(self, pergunta, texto_documento: str):
         # Optou-se por não utilizar a abordagem com pipeline por ser mais lenta
@@ -145,8 +137,16 @@ class GeradorDeRespostas:
         
         # Recuperando documentos usando o ChromaDB
         marcador_tempo_inicio = time()
-        documentos = await self.consultar_documentos_banco_vetores(pergunta)
-        lista_documentos = self.formatar_lista_documentos(documentos)
+        try:
+            documentos = await self.consultar_documentos_banco_vetores(pergunta)
+            lista_documentos = self.formatar_lista_documentos(documentos)
+        except Exception as excecao:
+            yield MensagemErro(
+                descricao='Falha na Consulta ao Banco Vetorial',
+                mensagem=f'Houve um problema na consulta de documentos. Tente mais tarde. (Tipo do erro: {excecao.__class__.__name__})'
+            ).json() + '\n'
+            return
+            
         marcador_tempo_fim = time()
         tempo_consulta = marcador_tempo_fim - marcador_tempo_inicio
         if fazer_log: print(f'--- consulta no banco concluída ({tempo_consulta} segundos)')
@@ -155,10 +155,19 @@ class GeradorDeRespostas:
         if fazer_log: print(f'--- aplicando scores do Bert aos documentos recuperados...')
         marcador_tempo_inicio = time()
         for documento in lista_documentos:
-            resposta_estimada = await self.estimar_resposta(pergunta, documento['conteudo'])
-            documento['score_bert'] = resposta_estimada['score']
-            documento['score_ponderado'] = resposta_estimada['score_ponderado']
-            documento['resposta_bert'] = resposta_estimada['resposta']
+            try:
+                resposta_estimada = await self.estimar_resposta(pergunta, documento['conteudo'])
+                documento['score_bert'] = resposta_estimada['score']
+                documento['score_ponderado'] = resposta_estimada['score_ponderado']
+                documento['resposta_bert'] = resposta_estimada['resposta']
+            except Exception as excecao:
+                documento['score_bert'] = None
+                documento['score_ponderado'] = None
+                documento['resposta_bert'] = None
+                yield MensagemInfo(
+                    descricao='Falha na aplicação do BERT',
+                    mensagem='Houve erro na aplicação dos valores, mas o processo continuou. Scores atribuídos com valor nulo'
+                ).json() + '\n'
         marcador_tempo_fim = time()
         tempo_bert = marcador_tempo_fim - marcador_tempo_inicio
         if fazer_log: print(f'--- scores atribuídos ({tempo_bert} segundos)')
@@ -170,32 +179,40 @@ class GeradorDeRespostas:
             dados={'tag':'status', 'conteudo':'Gerando resposta'}
             ).json() + '\n'
         
-        marcador_tempo_inicio = time()
-        texto_resposta_llama = ''
-        flag_tempo_resposta = False
-        async for item in self.interface_ollama.gerar_resposta_llama(
-                    pergunta=pergunta,
-                    # Inclui o título dos documentos no prompt do Llama
-                    documentos=[f"{doc[0]['titulo']} - {doc[1]}" for doc in zip(documentos['metadatas'][0], documentos['documents'][0])],
-                    contexto=contexto):
-            
-            texto_resposta_llama += item['response']
-            yield MensagemDados(
-                descricao='Fragmento de Resposta do LLM',
-                dados={
-                    'tag': 'frag-resposta-llm',
-                    'conteudo': item['response']
-                }
-                ).json() + '\n'
-            if not flag_tempo_resposta:
-                flag_tempo_resposta = True
-                tempo_inicio_resposta = time() - marcador_tempo_inicio
-                if fazer_log: print(f'----- iniciou retorno da resposta ({tempo_inicio_resposta} segundos)')
+        try:
+            marcador_tempo_inicio = time()
+            texto_resposta_llama = ''
+            flag_tempo_resposta = False
+            async for item in self.interface_ollama.gerar_resposta_llama(
+                        pergunta=pergunta,
+                        # Inclui o título dos documentos no prompt do Llama
+                        documentos=[f"{doc[0]['titulo']} - {doc[1]}" for doc in zip(documentos['metadatas'][0], documentos['documents'][0])],
+                        contexto=contexto):
+                
+                texto_resposta_llama += item['response']
+                yield MensagemDados(
+                    descricao='Fragmento de Resposta do LLM',
+                    dados={
+                        'tag': 'frag-resposta-llm',
+                        'conteudo': item['response']
+                    }
+                    ).json() + '\n'
+                if not flag_tempo_resposta:
+                    flag_tempo_resposta = True
+                    tempo_inicio_resposta = time() - marcador_tempo_inicio
+                    if fazer_log: print(f'----- iniciou retorno da resposta ({tempo_inicio_resposta} segundos)')
 
-        item['response'] = texto_resposta_llama
-        marcador_tempo_fim = time()
-        tempo_llama = marcador_tempo_fim - marcador_tempo_inicio
-        if fazer_log: print(f'--- resposta do Llama concluída ({tempo_llama} segundos)')
+            item['response'] = texto_resposta_llama
+            marcador_tempo_fim = time()
+            tempo_llama = marcador_tempo_fim - marcador_tempo_inicio
+            if fazer_log: print(f'--- resposta do Llama concluída ({tempo_llama} segundos)')
+        except Exception as excecao:
+            yield MensagemErro(
+                descricao='Falha na Geração da Resposta',
+                mensagem=f'Houve um problema geração de sua resposta. Tente mais tarde. (Tipo do erro: {excecao.__class__.__name__})'
+            ).json() + '\n'
+            return
+        
 
         # Retornando dados compilados
         yield MensagemDados(
@@ -203,15 +220,15 @@ class GeradorDeRespostas:
                 dados={
                     'tag': 'resposta-completa-llm',
                     'conteudo': {
-                            "pergunta": pergunta,
-                            "documentos": lista_documentos,
-                            "resposta_llama": item,
-                            "resposta": texto_resposta_llama.replace('\n\n', '\n'),
-                            "tempo_consulta": tempo_consulta,
-                            "tempo_bert": tempo_bert,
-                            "tempo_inicio_resposta": tempo_inicio_resposta,
-                            "tempo_llama_total": tempo_llama
-                        }
+                        "pergunta": pergunta,
+                        "documentos": lista_documentos,
+                        "resposta_llama": item,
+                        "resposta": texto_resposta_llama.replace('\n\n', '\n'),
+                        "tempo_consulta": tempo_consulta,
+                        "tempo_bert": tempo_bert,
+                        "tempo_inicio_resposta": tempo_inicio_resposta,
+                        "tempo_llama_total": tempo_llama
+                    }
                 }
             ).json()
         print('Concluído')
