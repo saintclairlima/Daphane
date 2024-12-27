@@ -1,6 +1,8 @@
 from chromadb import chromadb, Documents, EmbeddingFunction, Embeddings
 from pydantic import BaseModel
 from sentence_transformers import SentenceTransformer
+from langchain_chroma import Chroma
+from langchain_huggingface import HuggingFaceEmbeddings
 from torch import cuda
 
 import httpx
@@ -91,7 +93,7 @@ Se você não souber a resposta, assuma um tom gentil e diga que não tem inform
         async for fragmento_resposta in self.cliente_ollama.stream(prompt=prompt, contexto=contexto):
             yield fragmento_resposta
 
-class InterfaceChroma:
+class InterfaceChromaCustomizada:
     def __init__(self,
                  url_banco_vetores=environment.URL_BANCO_VETORES,
                  colecao_de_documentos=environment.NOME_COLECAO_DE_DOCUMENTOS,
@@ -116,9 +118,7 @@ class InterfaceChroma:
 
 
 # VERSÃO UTILIZANDO LANGCHAIN
-from langchain_chroma import Chroma
-from langchain_huggingface import HuggingFaceEmbeddings
-class InterfaceChromaLangchain:
+class InterfaceChroma:
     def __init__(self,
         url_banco_vetores=environment.URL_BANCO_VETORES,
         colecao_de_documentos=environment.NOME_COLECAO_DE_DOCUMENTOS,
@@ -127,7 +127,7 @@ class InterfaceChromaLangchain:
         
         if not funcao_de_embeddings: funcao_de_embeddings = HuggingFaceEmbeddings(
             model_name=environment.MODELO_DE_EMBEDDINGS,
-            show_progress=True,
+            show_progress=False,
             model_kwargs={"device": environment.DEVICE})
         
         self.banco_de_vetores = Chroma(

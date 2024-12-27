@@ -1,3 +1,5 @@
+import asyncio
+import json
 import torch
 
 from concurrent.futures import ThreadPoolExecutor
@@ -43,7 +45,8 @@ class GeradorDeRespostas:
     async def consultar_documentos_banco_vetores(self, pergunta: str, num_resultados:int=environment.NUM_DOCUMENTOS_RETORNADOS):
         return self.interface_chromadb.consultar_documentos(pergunta, num_resultados)
     
-    def formatar_lista_documentos(self, documentos: dict):
+    # AFAZER: considerar apagar. A função abaixo não funciona com Langchain
+    def formatar_lista_documentos_old(self, documentos: dict):
         return [
             {
                 'id': documentos['ids'][0][idx],
@@ -52,6 +55,16 @@ class GeradorDeRespostas:
                  'conteudo': f"{documentos['documents'][0][idx]}"
             }
             for idx in range(len(documentos['ids'][0]))]
+        
+    def formatar_lista_documentos(self, documentos):
+        return [
+            {
+                #id: None, # os documentos recuperados pelo LangChain não vêm com ID
+                'score_distancia': 1 - score, # Distância do cosseno vaia entre 1 e 0
+                'metadados': doc.metadata,
+                'conteudo': doc.page_content
+            }
+            for (doc, score) in documentos]
 
     async def estimar_resposta(self, pergunta, texto_documento: str):
         # Optou-se por não utilizar a abordagem com pipeline por ser mais lenta
@@ -135,6 +148,7 @@ class GeradorDeRespostas:
             descricao='Informação de Status',
             dados={'tag':'status', 'conteudo':'Consultando fontes'}
         ).json() + '\n'
+        await asyncio.sleep(0.001)
         
         # Recuperando documentos usando o ChromaDB
         marcador_tempo_inicio = time()
@@ -151,7 +165,6 @@ class GeradorDeRespostas:
         marcador_tempo_fim = time()
         tempo_consulta = marcador_tempo_fim - marcador_tempo_inicio
         if fazer_log: print(f'--- consulta no banco concluída ({tempo_consulta} segundos)')
-
         # Atribuindo scores usando Bert
         if fazer_log: print(f'--- aplicando scores do Bert aos documentos recuperados...')
         marcador_tempo_inicio = time()
@@ -169,6 +182,7 @@ class GeradorDeRespostas:
                     descricao='Falha na aplicação do BERT',
                     mensagem='Houve erro na aplicação dos valores, mas o processo continuou. Scores atribuídos com valor nulo'
                 ).json() + '\n'
+                await asyncio.sleep(0.001)
         marcador_tempo_fim = time()
         tempo_bert = marcador_tempo_fim - marcador_tempo_inicio
         if fazer_log: print(f'--- scores atribuídos ({tempo_bert} segundos)')
@@ -179,7 +193,7 @@ class GeradorDeRespostas:
             descricao='Informação de Status',
             dados={'tag':'status', 'conteudo':'Gerando resposta'}
             ).json() + '\n'
-        
+        await asyncio.sleep(0.001)
         try:
             marcador_tempo_inicio = time()
             texto_resposta_llama = ''
