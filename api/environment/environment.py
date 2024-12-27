@@ -12,8 +12,7 @@ class Environment:
         self.URL_LLAMA=os.getenv('URL_LLAMA')
         self.URL_HOST=os.getenv('URL_HOST')
         self.TAGS_SUBSTITUICAO_HTML={
-            'TAG_INSERCAO_URL_HOST': self.URL_HOST,
-            'TAG_INSERCAO_FLAG_ENCERRAMENTO_MENSAGEM': os.getenv('TAG_INSERCAO_FLAG_ENCERRAMENTO_MENSAGEM')
+            'TAG_INSERCAO_URL_HOST': self.URL_HOST
             }
 
         self.THREADPOOL_MAX_WORKERS=int(os.getenv('THREADPOOL_MAX_WORKERS'))
