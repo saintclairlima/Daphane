@@ -127,13 +127,14 @@ class GeradorDeRespostas:
                     descricao='Pergunta com mais de 300 palavras',
                     mensagem='Por motivos de segurança, a pergunta deve ter no máximo 300 palavras. Por favor, reformule o que você deseja perguntar, para ficar dentro desse limite.'
                 ).json() + '\n'
+            print('CONCLUÍDO POR ERRO: pergunta com mais de 300 palavras.')
             return
 
         if fazer_log: print(f'Gerador de respostas: realizando consulta para "{pergunta}"...')
         yield MensagemControle(
             descricao='Informação de Status',
             dados={'tag':'status', 'conteudo':'Consultando fontes'}
-            ).json() + '\n'
+        ).json() + '\n'
         
         # Recuperando documentos usando o ChromaDB
         marcador_tempo_inicio = time()
@@ -208,9 +209,10 @@ class GeradorDeRespostas:
             if fazer_log: print(f'--- resposta do Llama concluída ({tempo_llama} segundos)')
         except Exception as excecao:
             yield MensagemErro(
-                descricao='Falha na Geração da Resposta',
+                descricao=f'Falha na Geração da Resposta (Ollama offline ou {environment.MODELO_LLAMA} não disponível. {excecao.__class__.__name__})',
                 mensagem=f'Houve um problema geração de sua resposta. Tente mais tarde. (Tipo do erro: {excecao.__class__.__name__})'
             ).json() + '\n'
+            print(f'CONCLUÍDO POR ERRO: Falha na conexão com o LLM. Ollama offline ou {environment.MODELO_LLAMA} não disponível. {excecao.__class__.__name__}')
             return
         
 
@@ -233,4 +235,3 @@ class GeradorDeRespostas:
             ).json()
         print('Concluído')
 
-    
