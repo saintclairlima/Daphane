@@ -1,4 +1,3 @@
-import json
 import asyncio
 import torch
 
@@ -9,6 +8,7 @@ from typing import Callable, Generator
 
 from api.environment.environment import environment
 from api.utils.utils import InterfaceChroma, InterfaceOllama, DadosChat
+from utils.mensagem import MensagemControle, MensagemDados, MensagemErro
     
 
 class GeradorDeRespostas:
@@ -127,9 +127,22 @@ class GeradorDeRespostas:
     async def consultar(self, dados_chat: DadosChat, fazer_log:bool=True):
         contexto = dados_chat.contexto
         pergunta = dados_chat.pergunta
+        
+        if len(pergunta.split(' ')) > 300:
+            #AFAZER: decidir se mantém essa limitação. Colocada a princípio para evitar
+            #        problema de truncation com o Bert. Ajuda com Prompt Injection?
+            yield MensagemErro(
+                    descricao='Pergunta com mais de 300 palavras',
+                    mensagem='Por motivos de segurança, a pergunta deve ter no máximo 300 palavras. Por favor, reformule o que você deseja perguntar, para ficar dentro desse limite.'
+                ).json() + '\n'
+            return
 
         if fazer_log: print(f'Gerador de respostas: realizando consulta para "{pergunta}"...')
-
+        yield MensagemControle(
+            descricao='Informação de Status',
+            dados={'tag':'status', 'conteudo':'Consultando fontes'}
+            ).json() + '\n'
+        
         # Recuperando documentos usando o ChromaDB
         marcador_tempo_inicio = time()
         documentos = await self.consultar_documentos_banco_vetores(pergunta)
@@ -152,6 +165,11 @@ class GeradorDeRespostas:
         
         # Gerando resposta utilizando o Llama
         if fazer_log: print(f'--- gerando resposta com o Llama')
+        yield MensagemControle(
+            descricao='Informação de Status',
+            dados={'tag':'status', 'conteudo':'Gerando resposta'}
+            ).json() + '\n'
+        
         marcador_tempo_inicio = time()
         texto_resposta_llama = ''
         flag_tempo_resposta = False
@@ -162,7 +180,13 @@ class GeradorDeRespostas:
                     contexto=contexto):
             
             texto_resposta_llama += item['response']
-            yield item['response']
+            yield MensagemDados(
+                descricao='Fragmento de Resposta do LLM',
+                dados={
+                    'tag': 'frag-resposta-llm',
+                    'conteudo': item['response']
+                }
+                ).json() + '\n'
             if not flag_tempo_resposta:
                 flag_tempo_resposta = True
                 tempo_inicio_resposta = time() - marcador_tempo_inicio
@@ -173,22 +197,23 @@ class GeradorDeRespostas:
         tempo_llama = marcador_tempo_fim - marcador_tempo_inicio
         if fazer_log: print(f'--- resposta do Llama concluída ({tempo_llama} segundos)')
 
-        yield "CHEGOU_AO_FIM_DO_TEXTO_DA_RESPOSTA"
-
         # Retornando dados compilados
-        yield json.dumps(
-            {
-                "pergunta": pergunta,
-                "documentos": lista_documentos,
-                "resposta_llama": item,
-                "resposta": texto_resposta_llama.replace('\n\n', '\n'),
-                "tempo_consulta": tempo_consulta,
-                "tempo_bert": tempo_bert,
-                "tempo_inicio_resposta": tempo_inicio_resposta,
-                "tempo_llama_total": tempo_llama
-            },
-            ensure_ascii=False
-        )
+        yield MensagemDados(
+                descricao='Resposta completa',
+                dados={
+                    'tag': 'resposta-completa-llm',
+                    'conteudo': {
+                            "pergunta": pergunta,
+                            "documentos": lista_documentos,
+                            "resposta_llama": item,
+                            "resposta": texto_resposta_llama.replace('\n\n', '\n'),
+                            "tempo_consulta": tempo_consulta,
+                            "tempo_bert": tempo_bert,
+                            "tempo_inicio_resposta": tempo_inicio_resposta,
+                            "tempo_llama_total": tempo_llama
+                        }
+                }
+            ).json()
         print('Concluído')
 
     
