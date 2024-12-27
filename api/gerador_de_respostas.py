@@ -8,7 +8,7 @@ from typing import Callable, Generator
 
 from api.environment.environment import environment
 from api.utils.utils import InterfaceChroma, InterfaceOllama, DadosChat
-from utils.mensagem import MensagemControle, MensagemDados, MensagemErro
+from api.utils.mensagem import MensagemControle, MensagemDados, MensagemErro
     
 
 class GeradorDeRespostas:
