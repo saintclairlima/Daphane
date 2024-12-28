@@ -112,29 +112,3 @@ class InterfaceChroma:
     
     def consultar_documentos(self, termos_de_consulta: str, num_resultados=environment.NUM_DOCUMENTOS_RETORNADOS):
         return self.colecao_documentos.query(query_texts=[termos_de_consulta], n_results=num_resultados)
-    
-
-
-# VERSÃO UTILIZANDO LANGCHAIN
-from langchain_chroma import Chroma
-from langchain_huggingface import HuggingFaceEmbeddings
-class InterfaceChromaLangchain:
-    def __init__(self,
-        url_banco_vetores=environment.URL_BANCO_VETORES,
-        colecao_de_documentos=environment.NOME_COLECAO_DE_DOCUMENTOS,
-        funcao_de_embeddings=None,
-        fazer_log=True):
-        
-        if not funcao_de_embeddings: funcao_de_embeddings = HuggingFaceEmbeddings(
-            model_name=environment.MODELO_DE_EMBEDDINGS,
-            show_progress=True,
-            model_kwargs={"device": environment.DEVICE})
-        
-        self.banco_de_vetores = Chroma(
-            persist_directory=url_banco_vetores,
-            collection_name=colecao_de_documentos,
-            embedding_function=funcao_de_embeddings
-        )
-        
-    def consultar_documentos(self, termos_de_consulta: str, num_resultados=environment.NUM_DOCUMENTOS_RETORNADOS):
-        return self.banco_de_vetores.similarity_search_with_score(termos_de_consulta, k=num_resultados)
