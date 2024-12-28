@@ -6,7 +6,7 @@ from langchain_core.messages import HumanMessage, SystemMessage, AIMessage
 from langchain_core.output_parsers import StrOutputParser
 from langchain_core.runnables import RunnablePassthrough
 from langchain_ollama import ChatOllama
-from langchain.schema import RunnableMap, RunnableLambda
+from langchain_core.runnables.base import RunnableMap, RunnableLambda
 
 class RAGChain:
     def __init__(self, url_banco_vetores, colecao_de_documentos, funcao_de_embeddings):
