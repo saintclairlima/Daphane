@@ -11,7 +11,14 @@ from langchain.schema import RunnableMap, RunnableLambda
 class RAGChain:
     def __init__(self, url_banco_vetores, colecao_de_documentos, funcao_de_embeddings):
         
-
+        environment=Environment()
+        if not url_banco_vetores: url_banco_vetores = environment.URL_BANCO_VETORES
+        if not colecao_de_documentos: colecao_de_documentos = environment.COLECAO_DE_DOCUMENTOS
+        if not funcao_de_embeddings: funcao_de_embeddings = HuggingFaceEmbeddings(
+            model_name=environment.MODELO_DE_EMBEDDINGS,
+            show_progress=False,
+            model_kwargs={'device': environment.DEVICE}
+        )
         self.retriever = Chroma(
             persist_directory=url_banco_vetores,
             collection_name=colecao_de_documentos,
@@ -80,18 +87,22 @@ class RAGChain:
 
 class Environment:
     def __init__(self):
-        self.URL_BANCO_VETORES = os.getenv('URL_BANCO_VETORES')
-        self.URL_LLAMA=os.getenv('URL_LLAMA')
-        self.NOME_COLECAO_DE_DOCUMENTOS=os.getenv('COLECAO_DE_DOCUMENTOS')
-        self.EMBEDDING_INSTRUCTOR=os.getenv('EMBEDDING_INSTRUCTOR')
-        self.EMBEDDING_SQUAD_PORTUGUESE=os.getenv('EMBEDDING_SQUAD_PORTUGUESE')
-        self.MODELO_LLAMA=os.getenv('MODELO_LLAMA')
-        self.DEVICE=os.getenv('DEVICE') # ['cpu', cuda']
-        self.NUM_DOCUMENTOS_RETORNADOS=int(os.getenv('NUM_DOCUMENTOS_RETORNADOS'))
 
+        self.URL_BANCO_VETORES='api/conteudo/bancos_vetores/documentos_mulher'
+        self.URL_INDICE_DOCUMENTOS='api/conteudo/datasets/index.json'
+        self.COLECAO_DE_DOCUMENTOS='daphane'
+        self.URL_LLAMA='http://localhost:11434'
+        self.URL_HOST='http://localhost:8000'
+        self.THREADPOOL_MAX_WORKERS=10
+        self.EMBEDDING_INSTRUCTOR="hkunlp/instructor-xl"
+        self.EMBEDDING_SQUAD_PORTUGUESE="pierreguillou/bert-base-cased-squad-v1.1-portuguese"
+        self.MODELO_LLAMA='llama3.1'
+        self.DEVICE='cuda'
+        self.NUM_DOCUMENTOS_RETORNADOS=5
+        
         self.MODELO_DE_EMBEDDINGS = self.EMBEDDING_INSTRUCTOR
 
         self.CONTEXTO_BASE = []
 
-        with open(os.getenv('URL_INDICE_DOCUMENTOS'), 'r') as arq:
+        with open(self.URL_INDICE_DOCUMENTOS), 'r') as arq:
             self.DOCUMENTOS = json.load(arq)
