@@ -9,7 +9,7 @@ from langchain_ollama import ChatOllama
 from langchain_core.runnables.base import RunnableMap, RunnableLambda
 
 class RAGChain:
-    def __init__(self, url_banco_vetores, colecao_de_documentos, funcao_de_embeddings):
+    def __init__(self, url_banco_vetores=None, colecao_de_documentos=None, funcao_de_embeddings=None):
         
         environment=Environment()
         if not url_banco_vetores: url_banco_vetores = environment.URL_BANCO_VETORES
