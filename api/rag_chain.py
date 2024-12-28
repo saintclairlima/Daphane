@@ -1,4 +1,4 @@
-from api.environment.environment import environment
+#from api.environment.environment import environment
 
 from langchain_chroma import Chroma # type: ignore
 from langchain_core.prompts import ChatPromptTemplate
