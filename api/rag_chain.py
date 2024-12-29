@@ -116,4 +116,4 @@ class Environment:
         #with open(self.URL_INDICE_DOCUMENTOS, 'r') as arq:
         #    self.DOCUMENTOS = json.load(arq)
 rc = RAGChain()
-print(rc.consultar('O que é uma legislatura?'))
+print(rc.consultar('A o que as mulheres têm direito?'))
