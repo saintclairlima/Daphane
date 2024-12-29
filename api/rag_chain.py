@@ -11,9 +11,7 @@ from langchain_core.runnables.base import RunnableMap, RunnableLambda
 
 class RAGChain:
     def __init__(self, url_banco_vetores=None, colecao_de_documentos=None, funcao_de_embeddings=None):
-        print('Inicialização do componente')
-        print(url_banco_vetores)
-        print(colecao_de_documentos)
+        
         environment=Environment()
         if not url_banco_vetores: url_banco_vetores = environment.URL_BANCO_VETORES
         if not colecao_de_documentos: colecao_de_documentos = environment.COLECAO_DE_DOCUMENTOS
@@ -22,6 +20,11 @@ class RAGChain:
             show_progress=False,
             model_kwargs={'device': environment.DEVICE}
         )
+            
+        print('Inicialização do componente')
+        print(url_banco_vetores)
+        print(colecao_de_documentos)
+        
         self.retriever = Chroma(
             persist_directory=url_banco_vetores,
             collection_name=colecao_de_documentos,
@@ -84,6 +87,7 @@ Se você não souber a resposta, assuma um tom gentil e diga que não tem inform
     def recuperar_documentos(self, inputs):
         print('Recuperando documentos')
         documentos_recuperados = self.retriever.invoke(inputs["pergunta"])
+        print(f'{len(documentos_recuperados} documentos recuperados')
         for item in documentos_recuperados:
             print('----------\n', item)
         documentos_formatados = self.formatar_documentos_recuperados(documentos_recuperados)
