@@ -60,14 +60,15 @@ Se você não souber a resposta, assuma um tom gentil e diga que não tem inform
         self.formatador_saida = StrOutputParser()
 
         self.rag_chain = (
-            RunnableMap({
+            self.recuperar_documentos
+            | RunnableMap({
                 # Retrieve and format documents
-                "resultados_busca": RunnableLambda(self.recuperar_documentos),
+                "documentos_recuperados": RunnableLambda(lambda inputs: inputs["documentos_recuperados"]),
                 
                 # Generate LLM response using formatted documents
                 "llm_response": {
-                    "documentos": RunnableLambda(lambda inputs: inputs["resultados_busca"]["documentos_formatados"]),
-                    "pergunta": RunnablePassthrough(),
+                    "documentos": RunnableLambda(lambda inputs: inputs["documentos_formatados"]),
+                    "pergunta": RunnableLambda(lambda inputs: inputs["pergunta"]),
                 }
                 | self.prompt
                 | self.cliente_ollama
@@ -83,13 +84,14 @@ Se você não souber a resposta, assuma um tom gentil e diga que não tem inform
         documentos_recuperados = self.retriever.invoke(inputs["pergunta"])
         documentos_formatados = self.formatar_documentos_recuperados(documentos_recuperados)
         return {
+            "pergunta": inputs["pergunta"],
             "documentos_recuperados": documentos_recuperados,
             "documentos_formatados": documentos_formatados
         }
 
     def consultar(self, pergunta):
         resultado = self.rag_chain.invoke({"pergunta": pergunta})
-        documentos = resultado['resultado_busca']["documentos_recuperados"]
+        documentos = resultado["documentos_recuperados"]
         resposta_llm = resultado["llm_response"]
 
 class Environment:
