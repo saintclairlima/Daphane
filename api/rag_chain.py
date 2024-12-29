@@ -87,7 +87,7 @@ Se você não souber a resposta, assuma um tom gentil e diga que não tem inform
     def recuperar_documentos(self, inputs):
         print('Recuperando documentos')
         documentos_recuperados = self.retriever.invoke(inputs["pergunta"])
-        print(f'{len(documentos_recuperados} documentos recuperados')
+        print(f'{len(documentos_recuperados)} documentos recuperados')
         for item in documentos_recuperados:
             print('----------\n', item)
         documentos_formatados = self.formatar_documentos_recuperados(documentos_recuperados)
