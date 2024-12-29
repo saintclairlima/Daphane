@@ -31,6 +31,12 @@ class RAGChain:
                 "include": ["documents", "metadatas", "distances", "ids"]
             }
         )
+
+        self.papel_do_LLM='''Você é uma assistente que responde a dúvidas de mulheres sobre a Lei Maria da Penha.
+Assuma um tom formal, porém caloroso, com gentileza nas respostas. Utilize palavras e termos que sejam claros, autoexplicativos e linguagem simples, próximo do que o cidadão comum utiliza.Use as informações dos DOCUMENTOS fornecidos para gerar uma resposta clara para a PERGUNTA.
+Na resposta, não mencione que foi fornecido documentos de referência. Cite os nomes dos DOCUMENTOS e números dos artigos em que a resposta se baseia.
+A resposta não deve ter saudação, vocativo, nem qualquer tipo de introdução que dê a entender que não houve interação anterior.
+Se você não souber a resposta, assuma um tom gentil e diga que não tem informações suficientes para responder.'''
         
         self.cliente_ollama = ChatOllama(
             model=environment.MODELO_LLAMA,
@@ -40,7 +46,7 @@ class RAGChain:
         
         self.prompt = ChatPromptTemplate.from_messages(
             [    # Estabelece o papel que o LLM vai assumir ao responder as perguntas. Pode incluir o "tom" das respostas
-                ('system', self.papel_do_LLM + self.diretrizes),  
+                ('system', self.papel_do_LLM),  
 
                 # Placeholder para o histórico do chat manter o contexto. Durante a execução será substituído pelo histórico real do chat
                ("placeholder", "{chat_history}"), 
