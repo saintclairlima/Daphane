@@ -12,6 +12,8 @@ from langchain_core.runnables.base import RunnableMap, RunnableLambda
 class RAGChain:
     def __init__(self, url_banco_vetores=None, colecao_de_documentos=None, funcao_de_embeddings=None):
         print('Inicialização do componente')
+        print(url_banco_vetores)
+        print(colecao_de_documentos)
         environment=Environment()
         if not url_banco_vetores: url_banco_vetores = environment.URL_BANCO_VETORES
         if not colecao_de_documentos: colecao_de_documentos = environment.COLECAO_DE_DOCUMENTOS
@@ -118,5 +120,3 @@ class Environment:
 
         #with open(self.URL_INDICE_DOCUMENTOS, 'r') as arq:
         #    self.DOCUMENTOS = json.load(arq)
-rc = RAGChain()
-print(rc.consultar('A o que as mulheres têm direito?'))
