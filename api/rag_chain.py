@@ -83,7 +83,7 @@ Se você não souber a resposta, assuma um tom gentil e diga que não tem inform
         print('Recuperando documentos')
         documentos_recuperados = self.retriever.invoke(inputs["pergunta"])
         for item in documentos_recuperados:
-            print('----------\n', item
+            print('----------\n', item)
         documentos_formatados = self.formatar_documentos_recuperados(documentos_recuperados)
         return {
             "pergunta": inputs["pergunta"],
