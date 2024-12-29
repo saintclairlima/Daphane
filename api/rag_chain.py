@@ -28,7 +28,7 @@ class RAGChain:
             search_type="similarity",
             search_kwargs={
                 "k": environment.NUM_DOCUMENTOS_RETORNADOS,
-                "include": ["documents", "metadatas", "distances", "ids"]
+                "include": ["documents", "metadatas", "distances",]
             }
         )
 
