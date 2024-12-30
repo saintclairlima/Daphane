@@ -1,11 +1,9 @@
-#from api.environment.environment import environment
-import argparse
 import json
+from time import time
+from api.environment.environment import environment
+import argparse
 from langchain_chroma import Chroma # type: ignore
 from langchain_core.prompts import ChatPromptTemplate
-from langchain_core.messages import HumanMessage, SystemMessage, AIMessage 
-from langchain_core.output_parsers import StrOutputParser
-from langchain_core.runnables import RunnablePassthrough
 from langchain_huggingface import HuggingFaceEmbeddings
 from langchain_ollama import ChatOllama
 from langchain_core.runnables.base import RunnableMap, RunnableLambda
@@ -14,14 +12,12 @@ from langchain.callbacks.base import BaseCallbackHandler
 class CustomStreamingCallbackHandler(BaseCallbackHandler):
     def on_llm_new_token(self, token: str, **kwargs):
         print(token, end="")
-        # You can add any custom logic here (e.g., update a UI component)
 
 class RAGChain:
     def __init__(self, url_banco_vetores=None, colecao_de_documentos=None, funcao_de_embeddings=None, streaming_callback=None):
         
-        environment=Environment()
         if not url_banco_vetores: url_banco_vetores = environment.URL_BANCO_VETORES
-        if not colecao_de_documentos: colecao_de_documentos = environment.COLECAO_DE_DOCUMENTOS
+        if not colecao_de_documentos: colecao_de_documentos = environment.NOME_COLECAO_DE_DOCUMENTOS
         if not funcao_de_embeddings: funcao_de_embeddings = HuggingFaceEmbeddings(
             model_name=environment.MODELO_DE_EMBEDDINGS,
             show_progress=False,
@@ -33,16 +29,10 @@ class RAGChain:
         print(url_banco_vetores)
         print(colecao_de_documentos)
         
-        self.retriever = Chroma(
+        self.banco_vetores = Chroma(
             persist_directory=url_banco_vetores,
             collection_name=colecao_de_documentos,
             embedding_function=funcao_de_embeddings
-        ).as_retriever(
-            search_type="similarity",
-            search_kwargs={
-                "k": environment.NUM_DOCUMENTOS_RETORNADOS,
-                "include": ["documents", "metadatas", "distances",]
-            }
         )
 
         self.papel_do_LLM='''Você é uma assistente que responde a dúvidas de mulheres sobre a Lei Maria da Penha.
@@ -75,9 +65,8 @@ Se você não souber a resposta, assuma um tom gentil e diga que não tem inform
         self.rag_chain = (
             self.recuperar_documentos
             | RunnableMap({
-                # Retrieve and format documents
                 "documentos_recuperados": RunnableLambda(lambda inputs: inputs["documentos_recuperados"]),
-                
+                "tempo_consulta": RunnableLambda(lambda inputs: inputs["tempo_consulta"]),
                 # Generate LLM response using formatted documents
                 "llm_response": {
                     "documentos": RunnableLambda(lambda inputs: inputs["documentos_formatados"]),
@@ -89,45 +78,56 @@ Se você não souber a resposta, assuma um tom gentil e diga que não tem inform
         )
     
     def formatar_documentos_recuperados(self, documentos):
-        return "\n".join([documento.page_content for documento in documentos])
+        return "\n".join([documento['conteudo'] for documento in documentos])
     
     def recuperar_documentos(self, inputs):
         print('Recuperando documentos')
-        documentos_recuperados = self.retriever.invoke(inputs["pergunta"])
+        tempo_inicio = time()
+        documentos_recuperados = [
+            {
+                "conteudo": doc.page_content,
+                "metadados": doc.metadata,
+                "score_distancia": 1 - score
+            }
+            for doc, score in self.banco_vetores.similarity_search_with_score(inputs['pergunta'])
+        ]
+        tempo_consulta = time() - tempo_inicio
         documentos_formatados = self.formatar_documentos_recuperados(documentos_recuperados)
         return {
             "pergunta": inputs["pergunta"],
             "documentos_recuperados": documentos_recuperados,
-            "documentos_formatados": documentos_formatados
+            "documentos_formatados": documentos_formatados,
+            'tempo_consulta': tempo_consulta
         }
 
     def consultar(self, pergunta):
         resultado = self.rag_chain.invoke({"pergunta": pergunta})
-        documentos = resultado["documentos_recuperados"],
         resposta_llm = resultado["llm_response"]
-        return {'documentos': documentos, "resposta": resposta_llm}
-
-class Environment:
-    def __init__(self):
-
-        self.URL_BANCO_VETORES='api/conteudo/bancos_vetores/documentos_mulher'
-        self.URL_INDICE_DOCUMENTOS='api/conteudo/datasets/index.json'
-        self.COLECAO_DE_DOCUMENTOS='daphane'
-        self.URL_LLAMA='http://localhost:11434'
-        self.URL_HOST='http://localhost:8000'
-        self.THREADPOOL_MAX_WORKERS=10
-        self.EMBEDDING_INSTRUCTOR="hkunlp/instructor-xl"
-        self.EMBEDDING_SQUAD_PORTUGUESE="pierreguillou/bert-base-cased-squad-v1.1-portuguese"
-        self.MODELO_LLAMA='llama3.1'
-        self.DEVICE='cuda'
-        self.NUM_DOCUMENTOS_RETORNADOS=5
-        
-        self.MODELO_DE_EMBEDDINGS = self.EMBEDDING_INSTRUCTOR
-
-        self.CONTEXTO_BASE = []
-
-        with open(self.URL_INDICE_DOCUMENTOS, 'r') as arq:
-            self.DOCUMENTOS = json.load(arq)
+        return {'pergunta': pergunta,
+                'documentos': resultado["documentos_recuperados"],
+                "resposta_llama": resposta_llm.response_metadata,
+                'resposta': resposta_llm.content,
+                'tempo_consulta': resultado['tempo_consulta'],
+                'tempo_bert': None,
+                'tempo_inicio_resposta': None,
+                'tempo_llama_total': resposta_llm.total_duration}
+        '''AIMessage(
+        content="A Lei Maria da Penha garante à mulher em situação de violência doméstica e familiar o acesso a serviços de Defensoria Pública ou de Assistência Judiciária Gratuita, nos termos da lei. Além disso, ela tem direito ao atendimento policial e pericial especializado, ininterrupto e prestado por servidores previamente capacitados.\n\nA autoridade policial deve garantir proteção policial quando necessário, comunicando de imediato ao Ministério Público e ao Poder Judiciário. Ela também deve encaminhar a ofendida ao hospital ou posto de saúde e ao Instituto Médico Legal, fornecer transporte para a ofendida e seus dependentes para abrigo ou local seguro, quando houver risco de vida.\n\nA mulher em situação de violência doméstica e familiar tem direito à informação sobre os direitos conferidos pela Lei Maria da Penha e aos serviços disponíveis, inclusive os de assistência judiciária. Além disso, ela tem o direito ao atendimento especializado e humanizado.\n\nÉ importante ressaltar que a mulher em situação de violência doméstica e familiar deve estar acompanhada de advogado em todos os atos processuais, exceto se previsto no artigo 19 da Lei Maria da Penha.",
+        additional_kwargs={},
+        response_metadata={
+            "model": "llama3.1",
+            "created_at": "2024-12-30T12:12:07.231005007Z",
+            "done": True,
+            "done_reason": "stop",
+            "total_duration": 42873700782,
+            "load_duration": 31836667500,
+            "prompt_eval_count": 864,
+            "prompt_eval_duration": 1571000000,
+            "eval_count": 288,
+            "eval_duration": 8633000000,
+            "message": Message(
+                role="assistant", content="", images=None, tool_calls=None
+            )'''
 
 if __name__ == '__main__':
     parser = argparse.ArgumentParser(description="Testa a recuperação de documentos do banco vetorial e a formulação de uma resposta")
@@ -142,4 +142,4 @@ if __name__ == '__main__':
     url_banco_vetor = None if not args.url_banco_vetor else args.url_banco_vetor
     nome_colecao = None if not args.nome_colecao else args.nome_colecao
     ragchain = RAGChain(url_banco_vetores=url_banco_vetor, colecao_de_documentos=nome_colecao)
-    print(ragchain.consultar(pergunta))
+    print(json.dumps(ragchain.consultar(pergunta), indent=4))
