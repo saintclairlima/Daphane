@@ -110,7 +110,7 @@ Se você não souber a resposta, assuma um tom gentil e diga que não tem inform
                 'tempo_consulta': resultado['tempo_consulta'],
                 'tempo_bert': None,
                 'tempo_inicio_resposta': None,
-                'tempo_llama_total': resposta_llm.total_duration / 1000000000.}
+                'tempo_llama_total': resposta_llm.response_metadata['total_duration'] / 1000000000.}
         '''AIMessage(
         content="A Lei Maria da Penha garante à mulher em situação de violência doméstica e familiar o acesso a serviços de Defensoria Pública ou de Assistência Judiciária Gratuita, nos termos da lei. Além disso, ela tem direito ao atendimento policial e pericial especializado, ininterrupto e prestado por servidores previamente capacitados.\n\nA autoridade policial deve garantir proteção policial quando necessário, comunicando de imediato ao Ministério Público e ao Poder Judiciário. Ela também deve encaminhar a ofendida ao hospital ou posto de saúde e ao Instituto Médico Legal, fornecer transporte para a ofendida e seus dependentes para abrigo ou local seguro, quando houver risco de vida.\n\nA mulher em situação de violência doméstica e familiar tem direito à informação sobre os direitos conferidos pela Lei Maria da Penha e aos serviços disponíveis, inclusive os de assistência judiciária. Além disso, ela tem o direito ao atendimento especializado e humanizado.\n\nÉ importante ressaltar que a mulher em situação de violência doméstica e familiar deve estar acompanhada de advogado em todos os atos processuais, exceto se previsto no artigo 19 da Lei Maria da Penha.",
         additional_kwargs={},
