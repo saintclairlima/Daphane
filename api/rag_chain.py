@@ -13,7 +13,7 @@ from langchain.callbacks.base import BaseCallbackHandler
 
 class CustomStreamingCallbackHandler(BaseCallbackHandler):
     def on_llm_new_token(self, token: str, **kwargs):
-        print(f"New token received: {token}")
+        print(token, end="")
         # You can add any custom logic here (e.g., update a UI component)
 
 class RAGChain:
