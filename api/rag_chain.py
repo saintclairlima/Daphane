@@ -103,11 +103,7 @@ Se você não souber a resposta, assuma um tom gentil e diga que não tem inform
 
     def consultar(self, dados_chat: DadosChat):
         pergunta = dados_chat['pergunta']
-        contexto = [
-            ('human', "meu nome é Herman. Lembre-se disso"),
-            ('assistant', "Claro! Vou me lembrar disso")
-        ]
-        #dados_chat['contexto']
+        contexto = dados_chat['contexto']
         
         resultado = self.rag_chain.invoke({"pergunta": pergunta, 'contexto': contexto})
         
@@ -115,6 +111,9 @@ Se você não souber a resposta, assuma um tom gentil e diga que não tem inform
         resposta_llm.response_metadata['message'] = str(resposta_llm.response_metadata['message'])
         contexto.append(tuple(('human', pergunta)))
         contexto.append(tuple(('assistant', resposta_llm.content)))
+        # AFAZER: considerar colocar os documentos junto
+        # Mantém somente as últimas 20 mensagens (10 perguntas e 10 respostas)
+        contexto = contexto[-20:]
         
         return {'pergunta': pergunta,
                 'documentos': resultado["documentos_recuperados"],
