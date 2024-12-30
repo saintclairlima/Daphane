@@ -45,8 +45,7 @@ class GeradorDeRespostas:
     async def consultar_documentos_banco_vetores(self, pergunta: str, num_resultados:int=environment.NUM_DOCUMENTOS_RETORNADOS):
         return self.interface_chromadb.consultar_documentos(pergunta, num_resultados)
     
-    # AFAZER: considerar apagar. A função abaixo não funciona com Langchain
-    def formatar_lista_documentos_old(self, documentos: dict):
+    def formatar_lista_documentos(self, documentos: dict):
         return [
             {
                 'id': documentos['ids'][0][idx],
@@ -55,16 +54,6 @@ class GeradorDeRespostas:
                  'conteudo': f"{documentos['documents'][0][idx]}"
             }
             for idx in range(len(documentos['ids'][0]))]
-        
-    def formatar_lista_documentos(self, documentos):
-        return [
-            {
-                #id: None, # os documentos recuperados pelo LangChain não vêm com ID
-                'score_distancia': 1 - score, # Distância do cosseno vaia entre 1 e 0
-                'metadados': doc.metadata,
-                'conteudo': doc.page_content
-            }
-            for (doc, score) in documentos]
 
     async def estimar_resposta(self, pergunta, texto_documento: str):
         # Optou-se por não utilizar a abordagem com pipeline por ser mais lenta
