@@ -103,6 +103,7 @@ Se você não souber a resposta, assuma um tom gentil e diga que não tem inform
     def consultar(self, pergunta):
         resultado = self.rag_chain.invoke({"pergunta": pergunta})
         resposta_llm = resultado["llm_response"]
+        resposta_llm.response_metadata['message'] = str(resposta_llm.response_metadata['message'])
         return {'pergunta': pergunta,
                 'documentos': resultado["documentos_recuperados"],
                 "resposta_llama": resposta_llm.response_metadata,
