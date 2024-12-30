@@ -113,8 +113,8 @@ Se você não souber a resposta, assuma um tom gentil e diga que não tem inform
         
         resposta_llm = resultado["llm_response"]
         resposta_llm.response_metadata['message'] = str(resposta_llm.response_metadata['message'])
-        contexto.append(tuple('human', pergunta))
-        contexto.append(tuple('assistant', resposta_llm.content))
+        contexto.append(tuple(('human', pergunta)))
+        contexto.append(tuple(('assistant', resposta_llm.content)))
         
         return {'pergunta': pergunta,
                 'documentos': resultado["documentos_recuperados"],
