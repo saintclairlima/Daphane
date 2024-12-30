@@ -5,8 +5,8 @@ from sentence_transformers import SentenceTransformer
 from starlette.middleware.cors import CORSMiddleware
 
 from api.environment.environment import environment
-from api.gerador_de_respostas import GeradorDeRespostas, DadosChat
-from api.utils.utils import FuncaoEmbeddings
+from api.gerador_de_respostas import GeradorDeRespostas
+from api.utils.utils import FuncaoEmbeddings, DadosChat
 
 print('Instanciando a api (FastAPI)...')
 app = FastAPI()
@@ -19,9 +19,7 @@ app.add_middleware(
 )
 
 print(f'Criando GeradorDeRespostas (usando {environment.MODELO_DE_EMBEDDINGS} - device={environment.DEVICE})...')
-# Função de embeddings substituída pela versão com LangChain (passando como valor None, vai ser carregado o valor padrão)
-#funcao_de_embeddings = FuncaoEmbeddings(nome_modelo=environment.MODELO_DE_EMBEDDINGS, tipo_modelo=SentenceTransformer, device=environment.DEVICE)
-funcao_de_embeddings = None
+funcao_de_embeddings = FuncaoEmbeddings(nome_modelo=environment.MODELO_DE_EMBEDDINGS, tipo_modelo=SentenceTransformer, device=environment.DEVICE)
 gerador_de_respostas = GeradorDeRespostas(funcao_de_embeddings=funcao_de_embeddings, url_banco_vetores=environment.URL_BANCO_VETORES, device=environment.DEVICE)
 
 print('Definindo as rotas')
