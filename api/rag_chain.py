@@ -52,15 +52,17 @@ Se você não souber a resposta, assuma um tom gentil e diga que não tem inform
         )
         
         self.prompt = ChatPromptTemplate.from_messages(
-            [   # Estabelece o papel que o LLM vai assumir ao responder as perguntas. Pode incluir o "tom" das respostas
-                SystemMessage(content=self.papel_do_LLM),
+            [                
+                # Estabelece o papel que o LLM vai assumir ao responder as perguntas. Pode incluir o "tom" das respostas
+                ('system', self.papel_do_LLM),
 
                 # Placeholder para o histórico do chat manter o contexto. Durante a execução será substituído pelo histórico real do chat
+                # ("placeholder", "{contexto}"), 
                 MessagesPlaceholder(variable_name='placeholder'),
                 
                 # Placeholder para o input a ser fornecido durante a execução
                 # Será substituído pela pergunta do usuário e o contexto vindo do banco de vetores
-                HumanMessage(content="DOCUMENTOS: {documentos} \nPERGUNTA: {pergunta}")
+                ("human", "DOCUMENTOS: {documentos} \nPERGUNTA: {pergunta}"),
             ]
         )
 
