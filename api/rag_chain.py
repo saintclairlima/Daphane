@@ -9,9 +9,15 @@ from langchain_core.runnables import RunnablePassthrough
 from langchain_huggingface import HuggingFaceEmbeddings
 from langchain_ollama import ChatOllama
 from langchain_core.runnables.base import RunnableMap, RunnableLambda
+from langchain.callbacks.base import BaseCallbackHandler
+
+class CustomStreamingCallbackHandler(BaseCallbackHandler):
+    def on_llm_new_token(self, token: str, **kwargs):
+        print(f"New token received: {token}")
+        # You can add any custom logic here (e.g., update a UI component)
 
 class RAGChain:
-    def __init__(self, url_banco_vetores=None, colecao_de_documentos=None, funcao_de_embeddings=None):
+    def __init__(self, url_banco_vetores=None, colecao_de_documentos=None, funcao_de_embeddings=None, streaming_callback=None):
         
         environment=Environment()
         if not url_banco_vetores: url_banco_vetores = environment.URL_BANCO_VETORES
@@ -21,6 +27,7 @@ class RAGChain:
             show_progress=False,
             model_kwargs={'device': environment.DEVICE}
         )
+        if not streaming_callback: streaming_callback = CustomStreamingCallbackHandler()
             
         print('Inicialização do componente')
         print(url_banco_vetores)
@@ -47,7 +54,9 @@ Se você não souber a resposta, assuma um tom gentil e diga que não tem inform
         self.cliente_ollama = ChatOllama(
             model=environment.MODELO_LLAMA,
             temperature=0,
-            base_url=environment.URL_LLAMA
+            base_url=environment.URL_LLAMA,
+            streaming=True,
+            callbacks=[streaming_callback]
         )
         
         self.prompt = ChatPromptTemplate.from_messages(
@@ -85,9 +94,6 @@ Se você não souber a resposta, assuma um tom gentil e diga que não tem inform
     def recuperar_documentos(self, inputs):
         print('Recuperando documentos')
         documentos_recuperados = self.retriever.invoke(inputs["pergunta"])
-        print(f'{len(documentos_recuperados)} documentos recuperados')
-        for item in documentos_recuperados:
-            print('----------\n', item)
         documentos_formatados = self.formatar_documentos_recuperados(documentos_recuperados)
         return {
             "pergunta": inputs["pergunta"],
