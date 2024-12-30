@@ -136,7 +136,7 @@ if __name__ == '__main__':
     args = parser.parse_args()
     
     pergunta=args.pergunta
-    url_banco_vetor = None if not args.url_entrada else args.url_entrada
+    url_banco_vetor = None if not args.url_banco_vetor else args.url_banco_vetor
     nome_colecao = None if not args.nome_colecao else args.nome_colecao
     ragchain = RAGChain(url_banco_vetores=url_banco_vetor, colecao_de_documentos=nome_colecao)
     print(ragchain.consultar(pergunta))
