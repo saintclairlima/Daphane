@@ -57,8 +57,7 @@ Se você não souber a resposta, assuma um tom gentil e diga que não tem inform
                 ('system', self.papel_do_LLM),
 
                 # Placeholder para o histórico do chat manter o contexto. Durante a execução será substituído pelo histórico real do chat
-                # ("placeholder", "{contexto}"), 
-                ('placeholder', '{placeholder}'),
+                ('placeholder', '{contexto}'),
                 
                 # Placeholder para o input a ser fornecido durante a execução
                 # Será substituído pela pergunta do usuário e o contexto vindo do banco de vetores
@@ -97,13 +96,6 @@ Se você não souber a resposta, assuma um tom gentil e diga que não tem inform
         inputs['documentos'] = documentos_formatados
         inputs['tempo_consulta'] = tempo_consulta
         return inputs
-        
-    def criar_messages_placeholder(self, contexto):        
-        historico = [
-            HumanMessage(content=item['conteudo']) if item['tipo'] == 'humano'
-            else AIMessage(content=item['conteudo'])
-        for item in contexto]
-        return historico
 
     def inspecionar(self, inputs):
         print(f'Inputs:\n{inputs}')
@@ -112,14 +104,13 @@ Se você não souber a resposta, assuma um tom gentil e diga que não tem inform
     def consultar(self, dados_chat: DadosChat):
         pergunta = dados_chat['pergunta']
         contexto = dados_chat['contexto']
-        placeholder = self.criar_messages_placeholder(contexto)
         
-        resultado = self.rag_chain.invoke({"pergunta": pergunta, 'placeholder': placeholder})
+        resultado = self.rag_chain.invoke({"pergunta": pergunta, 'contexto': contexto})
         
         resposta_llm = resultado["llm_response"]
         resposta_llm.response_metadata['message'] = str(resposta_llm.response_metadata['message'])
-        contexto.append({'tipo': 'humano', 'conteudo': pergunta})
-        contexto.append({'tipo': 'assistente', 'conteudo': resposta_llm.content})
+        contexto.append(('human', pergunta))
+        contexto.append(('assistant', resposta_llm.content))
         
         return {'pergunta': pergunta,
                 'documentos': resultado["documentos_recuperados"],
