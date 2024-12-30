@@ -58,7 +58,7 @@ Se você não souber a resposta, assuma um tom gentil e diga que não tem inform
 
                 # Placeholder para o histórico do chat manter o contexto. Durante a execução será substituído pelo histórico real do chat
                 # ("placeholder", "{contexto}"), 
-                MessagesPlaceholder(variable_name='placeholder'),
+                ('placeholder', '{placeholder}'),
                 
                 # Placeholder para o input a ser fornecido durante a execução
                 # Será substituído pela pergunta do usuário e o contexto vindo do banco de vetores
