@@ -3,12 +3,13 @@ from time import time
 from api.environment.environment import environment
 import argparse
 from langchain_chroma import Chroma # type: ignore
-from langchain_core.prompts import ChatPromptTemplate
+from langchain_core.prompts import ChatPromptTemplate, MessagesPlaceholder
 from langchain_huggingface import HuggingFaceEmbeddings
 from langchain_ollama import ChatOllama
 from langchain_core.runnables.base import RunnableMap, RunnableLambda
+from langchain_core.messages import HumanMessage, SystemMessage, AIMessage
 from langchain.callbacks.base import BaseCallbackHandler
-from utils.utils import DadosChat
+from api.utils.utils import DadosChat
 
 class CustomStreamingCallbackHandler(BaseCallbackHandler):
     def on_llm_new_token(self, token: str, **kwargs):
@@ -51,15 +52,15 @@ Se você não souber a resposta, assuma um tom gentil e diga que não tem inform
         )
         
         self.prompt = ChatPromptTemplate.from_messages(
-            [    # Estabelece o papel que o LLM vai assumir ao responder as perguntas. Pode incluir o "tom" das respostas
-                ('system', self.papel_do_LLM),  
+            [   # Estabelece o papel que o LLM vai assumir ao responder as perguntas. Pode incluir o "tom" das respostas
+                SystemMessage(content=self.papel_do_LLM),
 
                 # Placeholder para o histórico do chat manter o contexto. Durante a execução será substituído pelo histórico real do chat
-               ("placeholder", "{contexto}"), 
-
+                MessagesPlaceholder(variable_name='placeholder'),
+                
                 # Placeholder para o input a ser fornecido durante a execução
                 # Será substituído pela pergunta do usuário e o contexto vindo do banco de vetores
-                ("human", "DOCUMENTOS: {documentos} \nPERGUNTA: {pergunta}"),
+                HumanMessage(content="DOCUMENTOS: {documentos} \nPERGUNTA: {pergunta}")
             ]
         )
 
@@ -68,12 +69,8 @@ Se você não souber a resposta, assuma um tom gentil e diga que não tem inform
             | RunnableMap({
                 "documentos_recuperados": RunnableLambda(lambda inputs: inputs["documentos_recuperados"]),
                 "tempo_consulta": RunnableLambda(lambda inputs: inputs["tempo_consulta"]),
-                # Generate LLM response using formatted documents
-                "llm_response": {
-                    "documentos": RunnableLambda(lambda inputs: inputs["documentos_formatados"]),
-                    "pergunta": RunnableLambda(lambda inputs: inputs["pergunta"]),
-                }
-                | self.prompt
+                "llm_response": self.prompt
+                | RunnableLambda(self.inspecionar)
                 | self.cliente_ollama,
             })
         )
@@ -94,23 +91,39 @@ Se você não souber a resposta, assuma um tom gentil e diga que não tem inform
         ]
         tempo_consulta = time() - tempo_inicio
         documentos_formatados = self.formatar_documentos_recuperados(documentos_recuperados)
-        return {
-            "pergunta": inputs["pergunta"],
-            "documentos_recuperados": documentos_recuperados,
-            "documentos_formatados": documentos_formatados,
-            'tempo_consulta': tempo_consulta
-        }
+        inputs['documentos_recuperados'] = documentos_recuperados
+        inputs['documentos'] = documentos_formatados
+        inputs['tempo_consulta'] = tempo_consulta
+        return inputs
+        
+    def criar_messages_placeholder(self, contexto):        
+        historico = [
+            HumanMessage(content=item['conteudo']) if item['tipo'] == 'humano'
+            else AIMessage(content=item['conteudo'])
+        for item in contexto]
+        return historico
+
+    def inspecionar(self, inputs):
+        print(f'Inputs:\n{inputs}')
+        return inputs
 
     def consultar(self, dados_chat: DadosChat):
         pergunta = dados_chat['pergunta']
         contexto = dados_chat['contexto']
-        resultado = self.rag_chain.invoke({"pergunta": pergunta, 'contexto': contexto})
+        placeholder = self.criar_messages_placeholder(contexto)
+        
+        resultado = self.rag_chain.invoke({"pergunta": pergunta, 'placeholder': placeholder})
+        
         resposta_llm = resultado["llm_response"]
         resposta_llm.response_metadata['message'] = str(resposta_llm.response_metadata['message'])
+        contexto.append({'tipo': 'humano', 'conteudo': pergunta})
+        contexto.append({'tipo': 'assistente', 'conteudo': resposta_llm.content})
+        
         return {'pergunta': pergunta,
                 'documentos': resultado["documentos_recuperados"],
                 "resposta_llama": resposta_llm.response_metadata,
                 'resposta': resposta_llm.content,
+                'contexto': contexto,
                 'tempo_consulta': resultado['tempo_consulta'],
                 'tempo_bert': None,
                 'tempo_inicio_resposta': None,
@@ -146,4 +159,4 @@ if __name__ == '__main__':
     url_banco_vetor = None if not args.url_banco_vetor else args.url_banco_vetor
     nome_colecao = None if not args.nome_colecao else args.nome_colecao
     ragchain = RAGChain(url_banco_vetores=url_banco_vetor, colecao_de_documentos=nome_colecao)
-    print(json.dumps(ragchain.consultar(pergunta), indent=4, ensure_ascii=False))
+    print(json.dumps(ragchain.consultar({'pergunta': pergunta, 'contexto': []}), indent=4, ensure_ascii=False))
