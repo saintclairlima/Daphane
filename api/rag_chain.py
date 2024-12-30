@@ -104,7 +104,7 @@ Se você não souber a resposta, assuma um tom gentil e diga que não tem inform
     def consultar(self, dados_chat: DadosChat):
         pergunta = dados_chat['pergunta']
         contexto = [
-            ('human', "meu nome é Herman. Lembre-se disso")
+            ('human', "meu nome é Herman. Lembre-se disso"),
             ('assistant', "Claro! Vou me lembrar disso")
         ]
         #dados_chat['contexto']
