@@ -63,8 +63,6 @@ Se você não souber a resposta, assuma um tom gentil e diga que não tem inform
             ]
         )
 
-        self.formatador_saida = StrOutputParser()
-
         self.rag_chain = (
             self.recuperar_documentos
             | RunnableMap({
@@ -77,8 +75,7 @@ Se você não souber a resposta, assuma um tom gentil e diga que não tem inform
                     "pergunta": RunnableLambda(lambda inputs: inputs["pergunta"]),
                 }
                 | self.prompt
-                | self.cliente_ollama
-                | self.formatador_saida,
+                | self.cliente_ollama,
             })
         )
     
