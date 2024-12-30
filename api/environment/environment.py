@@ -16,7 +16,7 @@ class Environment:
             }
 
         self.THREADPOOL_MAX_WORKERS=int(os.getenv('THREADPOOL_MAX_WORKERS'))
-        self.NOME_COLECAO_DE_DOCUMENTOS=os.getenv('COLECAO_DE_DOCUMENTOS')
+        self.NOME_COLECAO_DE_DOCUMENTOS=os.getenv('NOME_COLECAO_DE_DOCUMENTOS')
         self.EMBEDDING_INSTRUCTOR=os.getenv('EMBEDDING_INSTRUCTOR')
         self.EMBEDDING_SQUAD_PORTUGUESE=os.getenv('EMBEDDING_SQUAD_PORTUGUESE')
         self.MODELO_LLAMA=os.getenv('MODELO_LLAMA')
