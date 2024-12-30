@@ -1,5 +1,6 @@
 #from api.environment.environment import environment
-print('Importando bibliotecas')
+import argparse
+import json
 from langchain_chroma import Chroma # type: ignore
 from langchain_core.prompts import ChatPromptTemplate
 from langchain_core.messages import HumanMessage, SystemMessage, AIMessage 
@@ -122,5 +123,20 @@ class Environment:
 
         self.CONTEXTO_BASE = []
 
-        #with open(self.URL_INDICE_DOCUMENTOS, 'r') as arq:
-        #    self.DOCUMENTOS = json.load(arq)
+        with open(self.URL_INDICE_DOCUMENTOS, 'r') as arq:
+            self.DOCUMENTOS = json.load(arq)
+
+if __name__ == '__main__':
+    parser = argparse.ArgumentParser(description="Testa a recuperação de documentos do banco vetorial e a formulação de uma resposta")
+    
+    parser.add_argument('--pergunta', type=str, required=True, help='pergunta a ser respondida')
+    parser.add_argument('--url_banco_vetor', type=str, help="caminho para banco de vetores")
+    parser.add_argument('--nome_colecao', type=str, help="nome da coleção a ser consultada")
+    
+    args = parser.parse_args()
+    
+    pergunta=args.pergunta
+    url_banco_vetor = None if not args.url_entrada else args.url_entrada
+    nome_colecao = None if not args.nome_colecao else args.nome_colecao
+    ragchain = RAGChain(url_banco_vetores=url_banco_vetor, colecao_de_documentos=nome_colecao)
+    print(ragchain.consultar(pergunta))
