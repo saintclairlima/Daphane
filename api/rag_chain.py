@@ -8,6 +8,7 @@ from langchain_huggingface import HuggingFaceEmbeddings
 from langchain_ollama import ChatOllama
 from langchain_core.runnables.base import RunnableMap, RunnableLambda
 from langchain.callbacks.base import BaseCallbackHandler
+from utils.utils import DadosChat
 
 class CustomStreamingCallbackHandler(BaseCallbackHandler):
     def on_llm_new_token(self, token: str, **kwargs):
@@ -54,7 +55,7 @@ Se você não souber a resposta, assuma um tom gentil e diga que não tem inform
                 ('system', self.papel_do_LLM),  
 
                 # Placeholder para o histórico do chat manter o contexto. Durante a execução será substituído pelo histórico real do chat
-               ("placeholder", "{chat_history}"), 
+               ("placeholder", "{contexto}"), 
 
                 # Placeholder para o input a ser fornecido durante a execução
                 # Será substituído pela pergunta do usuário e o contexto vindo do banco de vetores
@@ -100,8 +101,10 @@ Se você não souber a resposta, assuma um tom gentil e diga que não tem inform
             'tempo_consulta': tempo_consulta
         }
 
-    def consultar(self, pergunta):
-        resultado = self.rag_chain.invoke({"pergunta": pergunta})
+    def consultar(self, dados_chat: DadosChat):
+        pergunta = dados_chat['pergunta']
+        contexto = dados_chat['contexto']
+        resultado = self.rag_chain.invoke({"pergunta": pergunta, 'contexto': contexto})
         resposta_llm = resultado["llm_response"]
         resposta_llm.response_metadata['message'] = str(resposta_llm.response_metadata['message'])
         return {'pergunta': pergunta,
@@ -143,4 +146,4 @@ if __name__ == '__main__':
     url_banco_vetor = None if not args.url_banco_vetor else args.url_banco_vetor
     nome_colecao = None if not args.nome_colecao else args.nome_colecao
     ragchain = RAGChain(url_banco_vetores=url_banco_vetor, colecao_de_documentos=nome_colecao)
-    print(json.dumps(ragchain.consultar(pergunta), indent=4))
+    print(json.dumps(ragchain.consultar(pergunta), indent=4, ensure_ascii=False))
